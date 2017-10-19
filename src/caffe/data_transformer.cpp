@@ -126,7 +126,6 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
   }
 }
 
-
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const Datum& datum,
                                        Blob<Dtype>* transformed_blob) {
@@ -222,6 +221,7 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
   }
 }
 
+// @halfways : called when making blob in Image Data Layer
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
                                        Blob<Dtype>* transformed_blob) {
@@ -292,7 +292,7 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
   }
 
   CHECK(cv_cropped_img.data);
-
+  // @halfways : blob making
   Dtype* transformed_data = transformed_blob->mutable_cpu_data();
   int top_index;
   for (int h = 0; h < height; ++h) {

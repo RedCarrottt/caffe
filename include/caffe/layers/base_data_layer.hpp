@@ -74,6 +74,7 @@ class BasePrefetchingDataLayer :
   BlockingQueue<Batch<Dtype>*> prefetch_full_;
   Batch<Dtype>* prefetch_current_;
 
+  // @halfways : declaration of transformed_data_ (blob)
   Blob<Dtype> transformed_data_;
 };
 

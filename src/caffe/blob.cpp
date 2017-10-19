@@ -8,6 +8,8 @@
 
 namespace caffe {
 
+// @halfways : blob shape modification -> addition of im2col data
+
 template <typename Dtype>
 void Blob<Dtype>::Reshape(const int num, const int channels, const int height,
     const int width) {
