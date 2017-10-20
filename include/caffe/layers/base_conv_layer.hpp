@@ -8,6 +8,8 @@
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/im2col.hpp"
 
+#include <stdio.h>
+
 namespace caffe {
 
 /**
@@ -103,10 +105,13 @@ class BaseConvolutionLayer : public Layer<Dtype> {
           pad_.cpu_data()[0], pad_.cpu_data()[1],
           stride_.cpu_data()[0], stride_.cpu_data()[1],
           dilation_.cpu_data()[0], dilation_.cpu_data()[1], col_buff);
+      //printf("im2col_cpu called\n");
     } else {
+      // @halfways : not used for test case, need to find out what nd means
       im2col_nd_cpu(data, num_spatial_axes_, conv_input_shape_.cpu_data(),
           col_buffer_shape_.data(), kernel_shape_.cpu_data(),
           pad_.cpu_data(), stride_.cpu_data(), dilation_.cpu_data(), col_buff);
+      //printf("im2col_nd_cpu called\n");
     }
   }
   inline void conv_col2im_cpu(const Dtype* col_buff, Dtype* data) {
