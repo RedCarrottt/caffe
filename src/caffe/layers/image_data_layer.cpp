@@ -78,6 +78,7 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   // Use data_transformer to infer the expected blob shape from a cv_image.
   vector<int> top_shape = this->data_transformer_->InferBlobShape(cv_img);
   // @halfways : InferBlobShape - return shape[4] with cv.img, using param_
+  // shape[0] = 1 (N = 1)
   this->transformed_data_.Reshape(top_shape);
   // Reshape prefetch_data and top[0] according to the batch_size.
   const int batch_size = this->layer_param_.image_data_param().batch_size();
@@ -213,39 +214,32 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   group_ = this->layer_param_.convolution_param().group();
   CHECK_EQ(channels_ % group_, 0);
       << "Number of output should be multiples of group.";
-  conv_in_channels_ = channels_; // @halfways : check point
+  conv_in_channels_ = channels_;
 
-  kernel_dim_ = this->blobs_[0]->count(1); // @halfways : need to check
+  // @halfways : kernel(filter) c * h * w
+  kernel_dim_ = this->blobs_[0]->count(1);
 
   // @halfways : from void BaseConvolutionLayer<Dtype>::Reshape
+  // ignore any exceptional case
 
   const int first_spatial_axis = channel_axis_ + 1;
-  CHECK_EQ(bottom[0]->num_axes(), first_spatial_axis + num_spatial_axes_)
-      << "bottom num_axes may not change.";
-  num_ = bottom[0]->count(0, channel_axis_);
-  CHECK_EQ(bottom[0]->shape(channel_axis_), channels_)
-      << "Input size incompatible with convolution kernel.";
-  // TODO: generalize to handle inputs of different shapes.
-  for (int bottom_id = 1; bottom_id < bottom.size(); ++bottom_id) {
-    CHECK(bottom[0]->shape() == bottom[bottom_id]->shape())
-        << "All inputs must have the same shape.";
-  }
+  num_ = top[0]->count(0, channel_axis_);
 
   // Setup input dimensions (conv_input_shape_).
-  vector<int> bottom_dim_blob_shape(1, num_spatial_axes_ + 1);
-  conv_input_shape_.Reshape(bottom_dim_blob_shape);
+  vector<int> top_dim_blob_shape(1, num_spatial_axes_ + 1);
+  conv_input_shape_.Reshape(top_dim_blob_shape);
   int* conv_input_shape_data = conv_input_shape_.mutable_cpu_data();
   // num_spatial_axes = 2
-  // conv_input_shape_[0] = bottom[0]->shape[1] (C)
-  // conv_input_shape_[1] = bottom[0]->shape[2] (H)
-  // conv_input_shape_[2] = bottom[0]->shape[3] (W)  
+  // conv_input_shape_[1] = top[0]->shape[2] (H)
+  // conv_input_shape_[2] = top[0]->shape[3] (W)  
   for (int i = 0; i < num_spatial_axes_ + 1; ++i) {
-    conv_input_shape_data[i] = bottom[0]->shape(channel_axis_ + i);
+    conv_input_shape_data[i] = top[0]->shape(channel_axis_ + i);
   }
 
   // The im2col result buffer will only hold one image at a time to avoid
   // overly large memory usage. In the special case of 1x1 convolution
   // it goes lazily unused to save memory.
+  /*
   col_buffer_shape_.clear();
   col_buffer_shape_.push_back(kernel_dim_ * group_);
   for (int i = 0; i < num_spatial_axes_; ++i) {
@@ -254,8 +248,10 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   col_buffer_.Reshape(col_buffer_shape_);
   bottom_dim_ = bottom[0]->count(channel_axis_);
   top_dim_ = top[0]->count(channel_axis_);
-  num_kernels_im2col_ = conv_in_channels_ * conv_out_spatial_dim_;
-  num_kernels_col2im_ = reverse_dimensions() ? top_dim_ : bottom_dim_;
+  */
+  
+  top_dim_ = top[0]->count(channel_axis_); // top_dim_ = c * h * w
+
 // @halfways : check point - col_buffer_ + kernel_dim_
 }
 
@@ -310,10 +306,16 @@ void ImageDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     read_time += timer.MicroSeconds();
     timer.Start();
     // Apply transformations (mirror, crop...) to the image
-    int offset = batch->data_.offset(item_id);
+    int offset = batch->data_.offset(item_id); // offset = C * H * W
     this->transformed_data_.set_cpu_data(prefetch_data + offset);
     this->data_transformer_->Transform(cv_img, &(this->transformed_data_));
-    trans_time += timer.MicroSeconds();
+	// @halfways : Transform -> im2col with direct access to prefetch_data
+	// with offset
+	Dtype* top_data = this->transformed_data->mutable_cpu_data();
+	conv_im2col_cpu(input, this->transformed_data);
+	// transformed_data를 다른 형태로 바꿀 것
+
+	trans_time += timer.MicroSeconds();
 
     prefetch_label[item_id] = lines_[lines_id_].second;
     // go to the next iter
