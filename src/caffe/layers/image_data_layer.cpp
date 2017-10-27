@@ -80,12 +80,14 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   // @halfways : InferBlobShape - return shape[4] with cv.img, using param_
   // shape[0] = 1 (N = 1)
   this->transformed_data_.Reshape(top_shape);
+  this->input_data_.Reshape(top_shape);
   // Reshape prefetch_data and top[0] according to the batch_size.
   const int batch_size = this->layer_param_.image_data_param().batch_size();
   CHECK_GT(batch_size, 0) << "Positive batch size required";
   // @halfways : N = batch_size (blob is based on batch)
-  // needs to move this part to the end of layer setup
+  // moved to the end of layer setup
   // check point!
+  /*
   top_shape[0] = batch_size;
   for (int i = 0; i < this->prefetch_.size(); ++i) {
     this->prefetch_[i]->data_.Reshape(top_shape);
@@ -95,12 +97,15 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   LOG(INFO) << "output data size: " << top[0]->num() << ","
       << top[0]->channels() << "," << top[0]->height() << ","
       << top[0]->width();
+ 
+
   // label
   vector<int> label_shape(1, batch_size);
   top[1]->Reshape(label_shape);
   for (int i = 0; i < this->prefetch_.size(); ++i) {
     this->prefetch_[i]->label_.Reshape(label_shape);
   }
+  */
 
 // @halfways : im2col setup
 
@@ -218,15 +223,17 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   CHECK_EQ(channels_ % group_, 0);
       << "Number of output should be multiples of group.";
   conv_in_channels_ = channels_;
+  conv_out_channels_ = num_output_;
 
   // @halfways : kernel(filter) c * h * w
-  kernel_dim_ = this->blobs_[0]->count(1);
+  // cannot figure out why kernel_dim_ must be applied to im2col output size
+  kernel_dim_ = conv_in_channels_ 
+	  * kernel_shape_data[0] * kernel_shape_data[1];
 
   // @halfways : from void BaseConvolutionLayer<Dtype>::Reshape
   // ignore any exceptional case
 
-  const int first_spatial_axis = channel_axis_ + 1;
-  num_ = top[0]->count(0, channel_axis_);
+  //num_ = top[0]->count(0, channel_axis_); // not used
 
   // Setup input dimensions (conv_input_shape_).
   vector<int> top_dim_blob_shape(1, num_spatial_axes_ + 1);
@@ -246,10 +253,13 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 
   // @halfways : usage of col_buffer_; direct access for data_?
   
+  offset_ = 1;
   col_buffer_shape_.clear();
-  // kernel_dim_ * group_ = channel size
-  // need to check if it is affected only by filter
-  col_buffer_shape_.push_back(kernel_dim_ * group_);
+  col_buffer_shape_.push_back(batch_size);
+  // kernel_dim_ = kernel C * H * W
+  // why is it needed?
+  col_buffer_shape_.push_back(kernel_dim_);
+  offset_ *= kernel_dim_;
   // OH = (H + 2P - FH) / S + 1
   // OW = (W + 2P - FO) / S + 1
   for (int i = 0; i < num_spatial_axes_; ++i) {
@@ -264,10 +274,40 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
     const int output_dim = (input_dim + 2 * pad_data[i] - kernel_extent)
 	   	/ stride_data[i] + 1;
 	col_buffer_shape_.push_back(output_dim);
+	offset_ *= output_dim;
   }
-  col_buffer_.Reshape(col_buffer_shape_);
-  bottom_dim_ = bottom[0]->count(channel_axis_);
-  top_dim_ = top[0]->count(channel_axis_); // top_dim_ = c * h * w
+
+  // @halfways : first set data_ size for im2col
+  // as capacity of data_ never shrink, it will sustain the size
+  // if once enlarged
+  for (int i = 0; i < this->prefetch_.size(); ++i) {
+	  this->prefetch_[i]->data_.Reshape(col_buffer_shape_);
+  }
+  top[0].Reshape(col_buffer_shape_);
+
+  // not used
+  //bottom_dim_ = bottom[0]->count(channel_axis_); 
+  //top_dim_ = top[0]->count(channel_axis_);
+
+  // @halfways : N = batch_size (blob is based on batch)
+  // needs to move this part to the end of layer setup
+  // check point!
+  top_shape[0] = batch_size;
+  for (int i = 0; i < this->prefetch_.size(); ++i) {
+	  this->prefetch_[i]->data_.Reshape(top_shape);
+  }
+  top[0]->Reshape(top_shape);
+
+  LOG(INFO) << "output data size: " << top[0]->num() << ","
+ 	  << top[0]->channels() << "," << top[0]->height() << ","
+ 	  << top[0]->width();
+
+  // label
+  vector<int> label_shape(1, batch_size);
+  top[1]->Reshape(label_shape);
+  for (int i = 0; i < this->prefetch_.size(); ++i) {
+    this->prefetch_[i]->label_.Reshape(label_shape);
+  }
 
 // @halfways : check point - col_buffer_ + kernel_dim_
 }
@@ -303,7 +343,8 @@ void ImageDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
   CHECK(cv_img.data) << "Could not load " << lines_[lines_id_].first;
   // Use data_transformer to infer the expected blob shape from a cv_img.
   vector<int> top_shape = this->data_transformer_->InferBlobShape(cv_img);
-  this->transformed_data_.Reshape(top_shape);
+  //this->transformed_data_.Reshape(top_shape);
+  this->input_data_.Reshape(top_shape);
   // Reshape batch according to the batch_size.
   top_shape[0] = batch_size;
   batch->data_.Reshape(top_shape);
@@ -323,14 +364,16 @@ void ImageDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     read_time += timer.MicroSeconds();
     timer.Start();
     // Apply transformations (mirror, crop...) to the image
-    int offset = batch->data_.offset(item_id); // offset = C * H * W
-    this->transformed_data_.set_cpu_data(prefetch_data + offset);
-    this->data_transformer_->Transform(cv_img, &(this->transformed_data_));
+    //int offset = batch->data_.offset(item_id); // offset = C * H * W
+    //this->transformed_data_.set_cpu_data(prefetch_data + offset);
+	this->data_transformer_->Transform(cv_img, &(this->input_data_));
 	// @halfways : Transform -> im2col with direct access to prefetch_data
-	// with offset
-	Dtype* top_data = this->transformed_data->mutable_cpu_data();
-	conv_im2col_cpu(input, this->transformed_data);
-	// transformed_data를 다른 형태로 바꿀 것
+	// 1) Transform to get input of im2col in temp
+	// 2) put into im2col to get col
+	int offset = offset_ * item_id;
+	this->transformed_data_.set_cpu_data(prefetch_data + offset);
+	//Dtype* top_data = this->transformed_data->mutable_cpu_data();
+	conv_im2col_cpu(this->input_data_, this->transformed_data);
 
 	trans_time += timer.MicroSeconds();
 

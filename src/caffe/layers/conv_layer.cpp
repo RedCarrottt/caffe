@@ -43,6 +43,8 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     Dtype* top_data = top[i]->mutable_cpu_data();
     for (int n = 0; n < this->num_; ++n) {
 		// @halfways : num_ = N (batch_size), bottom_dim_ = C * H * W
+		// bottom_dim_ must be modified => FN * OH * OW
+		// need to cut? or just send?
   		this->forward_cpu_gemm(bottom_data + n * this->bottom_dim_, weight,
           top_data + n * this->top_dim_);
 /*
