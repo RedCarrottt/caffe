@@ -83,6 +83,9 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   // Reshape prefetch_data and top[0] according to the batch_size.
   const int batch_size = this->layer_param_.image_data_param().batch_size();
   CHECK_GT(batch_size, 0) << "Positive batch size required";
+  // @halfways : N = batch_size (blob is based on batch)
+  // needs to move this part to the end of layer setup
+  // check point!
   top_shape[0] = batch_size;
   for (int i = 0; i < this->prefetch_.size(); ++i) {
     this->prefetch_[i]->data_.Reshape(top_shape);
@@ -230,6 +233,7 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   conv_input_shape_.Reshape(top_dim_blob_shape);
   int* conv_input_shape_data = conv_input_shape_.mutable_cpu_data();
   // num_spatial_axes = 2
+  // channel_axis_ = 1
   // conv_input_shape_[1] = top[0]->shape[2] (H)
   // conv_input_shape_[2] = top[0]->shape[3] (W)  
   for (int i = 0; i < num_spatial_axes_ + 1; ++i) {
@@ -239,17 +243,30 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   // The im2col result buffer will only hold one image at a time to avoid
   // overly large memory usage. In the special case of 1x1 convolution
   // it goes lazily unused to save memory.
-  /*
+
+  // @halfways : usage of col_buffer_; direct access for data_?
+  
   col_buffer_shape_.clear();
+  // kernel_dim_ * group_ = channel size
+  // need to check if it is affected only by filter
   col_buffer_shape_.push_back(kernel_dim_ * group_);
+  // OH = (H + 2P - FH) / S + 1
+  // OW = (W + 2P - FO) / S + 1
   for (int i = 0; i < num_spatial_axes_; ++i) {
-    col_buffer_shape_.push_back(output_shape_[i]);
+    const int* kernel_shape_data = kernel_shape_.cpu_data();
+	const int* stride_data = stride_.cpu_data();
+	const int* pad_data = pad_.cpu_data();
+	const int* dilation_data = dilation_.cpu_data();
+	
+	const int input_dim = top_shape[i + 2];
+	const int kernel_extent = dilation_data[i] 
+		* (kernel_shape_data[i] + 1) - 1; // d * (k_h - 1) + 1?
+    const int output_dim = (input_dim + 2 * pad_data[i] - kernel_extent)
+	   	/ stride_data[i] + 1;
+	col_buffer_shape_.push_back(output_dim);
   }
   col_buffer_.Reshape(col_buffer_shape_);
   bottom_dim_ = bottom[0]->count(channel_axis_);
-  top_dim_ = top[0]->count(channel_axis_);
-  */
-  
   top_dim_ = top[0]->count(channel_axis_); // top_dim_ = c * h * w
 
 // @halfways : check point - col_buffer_ + kernel_dim_

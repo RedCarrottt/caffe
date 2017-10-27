@@ -15,8 +15,15 @@ void ConvolutionLayer<Dtype>::compute_output_shape() {
   this->output_shape_.clear();
   for (int i = 0; i < this->num_spatial_axes_; ++i) {
     // i + 1 to skip channel axis
+	// input_shape(int i) { return (*bottom_shape_)[channel_axis_ + i]; }
+	// input_shape(i + 1) = bottom[0]->shape(i + 2)
+	// input_dim(i = 0) = shape[2] = H
+	// input_dim(i = 1) = shape[3] = W
     const int input_dim = this->input_shape(i + 1);
-    const int kernel_extent = dilation_data[i] * (kernel_shape_data[i] - 1) + 1;
+    // kernel_shape_data[0] = kernel_h
+	// kernel_shape_data[1] = kernel_w
+	// kernel_extent(i = 0) = dilation_data[0] * (kernel_h - 1) + 1
+	const int kernel_extent = dilation_data[i] * (kernel_shape_data[i] - 1) + 1;
     const int output_dim = (input_dim + 2 * pad_data[i] - kernel_extent)
         / stride_data[i] + 1;
     this->output_shape_.push_back(output_dim);
