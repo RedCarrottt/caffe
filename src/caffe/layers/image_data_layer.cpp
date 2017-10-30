@@ -87,7 +87,6 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   // @halfways : N = batch_size (blob is based on batch)
   // moved to the end of layer setup
   // check point!
-  /*
   top_shape[0] = batch_size;
   for (int i = 0; i < this->prefetch_.size(); ++i) {
     this->prefetch_[i]->data_.Reshape(top_shape);
@@ -105,7 +104,6 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   for (int i = 0; i < this->prefetch_.size(); ++i) {
     this->prefetch_[i]->label_.Reshape(label_shape);
   }
-  */
 
 // @halfways : im2col setup
 
@@ -128,67 +126,67 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   kernel_shape_.Reshape(spatial_dim_blob_shape);
   int* kernel_shape_data = kernel_shape_.mutable_cpu_data();
   if (conv_param.has_kernel_h() || conv_param.has_kernel_w()) {
-    CHECK_EQ(num_spatial_axes_, 2)
-        << "kernel_h & kernel_w can only be used for 2D convolution.";
-    CHECK_EQ(0, conv_param.kernel_size_size())
-        << "Either kernel_size or kernel_h/w should be specified; not both.";
+    //CHECK_EQ(num_spatial_axes_, 2)
+    //    << "kernel_h & kernel_w can only be used for 2D convolution.";
+    //CHECK_EQ(0, conv_param.kernel_size_size())
+    //    << "Either kernel_size or kernel_h/w should be specified; not both.";
     kernel_shape_data[0] = conv_param.kernel_h();
     kernel_shape_data[1] = conv_param.kernel_w();
   } else {
     const int num_kernel_dims = conv_param.kernel_size_size();
-    CHECK(num_kernel_dims == 1 || num_kernel_dims == num_spatial_axes_)
-        << "kernel_size must be specified once, or once per spatial dimension "
-        << "(kernel_size specified " << num_kernel_dims << " times; "
-        << num_spatial_axes_ << " spatial dims).";
+    //CHECK(num_kernel_dims == 1 || num_kernel_dims == num_spatial_axes_)
+    //    << "kernel_size must be specified once, or once per spatial dimension "
+    //    << "(kernel_size specified " << num_kernel_dims << " times; "
+    //    << num_spatial_axes_ << " spatial dims).";
       for (int i = 0; i < num_spatial_axes_; ++i) {
         kernel_shape_data[i] =
             conv_param.kernel_size((num_kernel_dims == 1) ? 0 : i);
       }
   }
   for (int i = 0; i < num_spatial_axes_; ++i) {
-    CHECK_GT(kernel_shape_data[i], 0) << "Filter dimensions must be nonzero.";
+    //CHECK_GT(kernel_shape_data[i], 0) << "Filter dimensions must be nonzero.";
   }
   // Setup stride dimensions (stride_).
   stride_.Reshape(spatial_dim_blob_shape);
   int* stride_data = stride_.mutable_cpu_data();
   if (conv_param.has_stride_h() || conv_param.has_stride_w()) {
-    CHECK_EQ(num_spatial_axes_, 2)
-        << "stride_h & stride_w can only be used for 2D convolution.";
-    CHECK_EQ(0, conv_param.stride_size())
-        << "Either stride or stride_h/w should be specified; not both.";
+    //CHECK_EQ(num_spatial_axes_, 2)
+    //    << "stride_h & stride_w can only be used for 2D convolution.";
+    //CHECK_EQ(0, conv_param.stride_size())
+    //    << "Either stride or stride_h/w should be specified; not both.";
     stride_data[0] = conv_param.stride_h();
     stride_data[1] = conv_param.stride_w();
   } else {
     const int num_stride_dims = conv_param.stride_size();
-    CHECK(num_stride_dims == 0 || num_stride_dims == 1 ||
-          num_stride_dims == num_spatial_axes_)
-        << "stride must be specified once, or once per spatial dimension "
-        << "(stride specified " << num_stride_dims << " times; "
-        << num_spatial_axes_ << " spatial dims).";
+    //CHECK(num_stride_dims == 0 || num_stride_dims == 1 ||
+    //      num_stride_dims == num_spatial_axes_)
+    //    << "stride must be specified once, or once per spatial dimension "
+    //    << "(stride specified " << num_stride_dims << " times; "
+    //    << num_spatial_axes_ << " spatial dims).";
     const int kDefaultStride = 1;
     for (int i = 0; i < num_spatial_axes_; ++i) {
       stride_data[i] = (num_stride_dims == 0) ? kDefaultStride :
           conv_param.stride((num_stride_dims == 1) ? 0 : i);
-      CHECK_GT(stride_data[i], 0) << "Stride dimensions must be nonzero.";
+    //  CHECK_GT(stride_data[i], 0) << "Stride dimensions must be nonzero.";
     }
   }
   // Setup pad dimensions (pad_).
   pad_.Reshape(spatial_dim_blob_shape);
   int* pad_data = pad_.mutable_cpu_data();
   if (conv_param.has_pad_h() || conv_param.has_pad_w()) {
-    CHECK_EQ(num_spatial_axes_, 2)
-        << "pad_h & pad_w can only be used for 2D convolution.";
-    CHECK_EQ(0, conv_param.pad_size())
-        << "Either pad or pad_h/w should be specified; not both.";
+    //CHECK_EQ(num_spatial_axes_, 2)
+    //    << "pad_h & pad_w can only be used for 2D convolution.";
+    //CHECK_EQ(0, conv_param.pad_size())
+    //    << "Either pad or pad_h/w should be specified; not both.";
     pad_data[0] = conv_param.pad_h();
     pad_data[1] = conv_param.pad_w();
   } else {
     const int num_pad_dims = conv_param.pad_size();
-    CHECK(num_pad_dims == 0 || num_pad_dims == 1 ||
-          num_pad_dims == num_spatial_axes_)
-        << "pad must be specified once, or once per spatial dimension "
-        << "(pad specified " << num_pad_dims << " times; "
-        << num_spatial_axes_ << " spatial dims).";
+    //CHECK(num_pad_dims == 0 || num_pad_dims == 1 ||
+    //     num_pad_dims == num_spatial_axes_)
+    //    << "pad must be specified once, or once per spatial dimension "
+    //    << "(pad specified " << num_pad_dims << " times; "
+    //    << num_spatial_axes_ << " spatial dims).";
     const int kDefaultPad = 0;
     for (int i = 0; i < num_spatial_axes_; ++i) {
       pad_data[i] = (num_pad_dims == 0) ? kDefaultPad :
@@ -199,11 +197,11 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   dilation_.Reshape(spatial_dim_blob_shape);
   int* dilation_data = dilation_.mutable_cpu_data();
   const int num_dilation_dims = conv_param.dilation_size();
-  CHECK(num_dilation_dims == 0 || num_dilation_dims == 1 ||
-        num_dilation_dims == num_spatial_axes_)
-      << "dilation must be specified once, or once per spatial dimension "
-      << "(dilation specified " << num_dilation_dims << " times; "
-      << num_spatial_axes_ << " spatial dims).";
+  //CHECK(num_dilation_dims == 0 || num_dilation_dims == 1 ||
+  //      num_dilation_dims == num_spatial_axes_)
+  //    << "dilation must be specified once, or once per spatial dimension "
+  //    << "(dilation specified " << num_dilation_dims << " times; "
+  //    << num_spatial_axes_ << " spatial dims).";
   const int kDefaultDilation = 1;
   for (int i = 0; i < num_spatial_axes_; ++i) {
     dilation_data[i] = (num_dilation_dims == 0) ? kDefaultDilation :
@@ -220,10 +218,10 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   // Configure output channels and groups.
   channels_ = top[0]->shape(channel_axis_);
   group_ = this->layer_param_.convolution_param().group();
-  CHECK_EQ(channels_ % group_, 0);
-      << "Number of output should be multiples of group.";
+  //CHECK_EQ(channels_ % group_, 0);
+  //    << "Number of output should be multiples of group.";
   conv_in_channels_ = channels_;
-  conv_out_channels_ = num_output_;
+  //conv_out_channels_ = num_output_;
 
   // @halfways : kernel(filter) c * h * w
   // cannot figure out why kernel_dim_ must be applied to im2col output size
@@ -283,7 +281,7 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   for (int i = 0; i < this->prefetch_.size(); ++i) {
 	  this->prefetch_[i]->data_.Reshape(col_buffer_shape_);
   }
-  top[0].Reshape(col_buffer_shape_);
+  top[0]->Reshape(col_buffer_shape_);
 
   // not used
   //bottom_dim_ = bottom[0]->count(channel_axis_); 
@@ -302,13 +300,14 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
  	  << top[0]->channels() << "," << top[0]->height() << ","
  	  << top[0]->width();
 
+  /*
   // label
   vector<int> label_shape(1, batch_size);
   top[1]->Reshape(label_shape);
   for (int i = 0; i < this->prefetch_.size(); ++i) {
     this->prefetch_[i]->label_.Reshape(label_shape);
   }
-
+  */
 // @halfways : check point - col_buffer_ + kernel_dim_
 }
 
@@ -364,16 +363,18 @@ void ImageDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     read_time += timer.MicroSeconds();
     timer.Start();
     // Apply transformations (mirror, crop...) to the image
-    //int offset = batch->data_.offset(item_id); // offset = C * H * W
-    //this->transformed_data_.set_cpu_data(prefetch_data + offset);
-	this->data_transformer_->Transform(cv_img, &(this->input_data_));
+	int offset = batch->data_.offset(item_id); // offset = C * H * W
+    this->transformed_data_.set_cpu_data(prefetch_data + offset);
+    this->data_transformer_->Transform(cv_img, &(this->transformed_data_));
+
 	// @halfways : Transform -> im2col with direct access to prefetch_data
 	// 1) Transform to get input of im2col in temp
 	// 2) put into im2col to get col
-	int offset = offset_ * item_id;
-	this->transformed_data_.set_cpu_data(prefetch_data + offset);
-	//Dtype* top_data = this->transformed_data->mutable_cpu_data();
-	conv_im2col_cpu(this->input_data_, this->transformed_data);
+
+	//int offset = offset_ * item_id;
+	//this->transformed_data_.set_cpu_data(prefetch_data + offset);
+	//this->data_transformer_->Transform(cv_img, &(this->input_data_));
+	//conv_im2col_cpu(this->input_data_, this->transformed_data);
 
 	trans_time += timer.MicroSeconds();
 
