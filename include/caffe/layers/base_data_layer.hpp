@@ -76,7 +76,6 @@ class BasePrefetchingDataLayer :
 
   // @halfways : declaration of transformed_data_ (blob)
   Blob<Dtype> transformed_data_;
-  Blob<Dtype> input_data_;
 };
 
 }  // namespace caffe

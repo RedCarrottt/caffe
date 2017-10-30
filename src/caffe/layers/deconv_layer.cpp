@@ -64,11 +64,14 @@ void DeconvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
         }
         // Gradient w.r.t. bottom data, if necessary, reusing the column buffer
         // we might have just computed above.
-        if (propagate_down[i]) {
-          this->forward_cpu_gemm(top_diff + n * this->top_dim_, weight,
-              bottom_diff + n * this->bottom_dim_,
-              this->param_propagate_down_[0]);
-        }
+		// make not to skip im2col since we skip im2col at first
+        //if (propagate_down[i]) {
+        //  this->forward_cpu_gemm(top_diff + n * this->top_dim_, weight,
+        //      bottom_diff + n * this->bottom_dim_,
+        //      this->param_propagate_down_[0]);
+        //}
+        this->forward_cpu_gemm(top_diff + n * this->top_dim_, weight,
+            bottom_diff + n * this->bottom_dim_);
       }
     }
   }
