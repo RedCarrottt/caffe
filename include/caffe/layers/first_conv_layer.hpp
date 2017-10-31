@@ -1,5 +1,5 @@
-#ifndef CAFFE_CONV_LAYER_HPP_
-#define CAFFE_CONV_LAYER_HPP_
+#ifndef CAFFE_FIRST_CONV_LAYER_HPP_
+#define CAFFE_FIRST_CONV_LAYER_HPP_
 
 #include <vector>
 
@@ -81,4 +81,4 @@ class FirstConvolutionLayer : public BaseConvolutionLayer<Dtype> {
 
 }  // namespace caffe
 
-#endif  // CAFFE_CONV_LAYER_HPP_
+#endif  // CAFFE_FIRST_CONV_LAYER_HPP_

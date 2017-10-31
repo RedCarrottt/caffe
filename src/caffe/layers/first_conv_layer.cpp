@@ -1,7 +1,7 @@
 #include <vector>
 #include <stdio.h>
 
-#include "caffe/layers/conv_layer.hpp"
+#include "caffe/layers/first_conv_layer.hpp"
 //#include "caffe/layers/base_conv_layer.hpp"
 
 namespace caffe {
