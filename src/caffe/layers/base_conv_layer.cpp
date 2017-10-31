@@ -231,21 +231,20 @@ void BaseConvolutionLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
 
   // @halfways : new bottom_dim_ is calculated here
   // indicating the size of im2coled data
-  bottom_dim_ = 1;
+  bottom_dim_im2col_ = 1;
   col_buffer_shape_.clear();
   col_buffer_shape_.push_back(kernel_dim_ * group_);
-  bottom_dim_ = bottom_dim_ * kernel_dim_ * group_;
+  bottom_dim_im2col_ = bottom_dim_im2col_ * kernel_dim_ * group_;
   for (int i = 0; i < num_spatial_axes_; ++i) {
     if (reverse_dimensions()) {
       col_buffer_shape_.push_back(input_shape(i + 1));
     } else {
       col_buffer_shape_.push_back(output_shape_[i]);
-	  bottom_dim_ *= output_shape_[i]; 
+	  bottom_dim_im2col_ *= output_shape_[i]; 
     }
   }
   col_buffer_.Reshape(col_buffer_shape_);
-  // @halfways : bottom_dim_ modified to the size of data already im2coled 
-  //bottom_dim_ = bottom[0]->count(channel_axis_);
+  bottom_dim_ = bottom[0]->count(channel_axis_);
   top_dim_ = top[0]->count(channel_axis_);
   num_kernels_im2col_ = conv_in_channels_ * conv_out_spatial_dim_;
   num_kernels_col2im_ = reverse_dimensions() ? top_dim_ : bottom_dim_;

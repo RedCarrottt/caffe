@@ -1,11 +1,13 @@
 #include <vector>
+#include <stdio.h>
 
 #include "caffe/layers/conv_layer.hpp"
+//#include "caffe/layers/base_conv_layer.hpp"
 
 namespace caffe {
 
 template <typename Dtype>
-void ConvolutionLayer<Dtype>::compute_output_shape() {
+void FirstConvolutionLayer<Dtype>::compute_output_shape() {
   const int* kernel_shape_data = this->kernel_shape_.cpu_data();
   const int* stride_data = this->stride_.cpu_data();
   const int* pad_data = this->pad_.cpu_data();
@@ -13,8 +15,15 @@ void ConvolutionLayer<Dtype>::compute_output_shape() {
   this->output_shape_.clear();
   for (int i = 0; i < this->num_spatial_axes_; ++i) {
     // i + 1 to skip channel axis
+	// input_shape(int i) { return (*bottom_shape_)[channel_axis_ + i]; }
+	// input_shape(i + 1) = bottom[0]->shape(i + 2)
+	// input_dim(i = 0) = shape[2] = H
+	// input_dim(i = 1) = shape[3] = W
     const int input_dim = this->input_shape(i + 1);
-    const int kernel_extent = dilation_data[i] * (kernel_shape_data[i] - 1) + 1;
+    // kernel_shape_data[0] = kernel_h
+	// kernel_shape_data[1] = kernel_w
+	// kernel_extent(i = 0) = dilation_data[0] * (kernel_h - 1) + 1
+	const int kernel_extent = dilation_data[i] * (kernel_shape_data[i] - 1) + 1;
     const int output_dim = (input_dim + 2 * pad_data[i] - kernel_extent)
         / stride_data[i] + 1;
     this->output_shape_.push_back(output_dim);
@@ -22,25 +31,40 @@ void ConvolutionLayer<Dtype>::compute_output_shape() {
 }
 
 template <typename Dtype>
-void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+void FirstConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   const Dtype* weight = this->blobs_[0]->cpu_data();
+  //int temp1 = bottom[0]->count(0, channel_axis_);
+  //int temp2 = bottom[0]->count(channel_axis_);
+  //printf("bottom blob size : %d, t1 : %d, t2 : %d\n", (int)bottom.size(), temp1, temp2);
+  //const Dtype* col_buff;
   for (int i = 0; i < bottom.size(); ++i) {
     const Dtype* bottom_data = bottom[i]->cpu_data();
     Dtype* top_data = top[i]->mutable_cpu_data();
     for (int n = 0; n < this->num_; ++n) {
-      this->forward_cpu_gemm(bottom_data + n * this->bottom_dim_, weight,
-          top_data + n * this->top_dim_);
+		// @halfways : num_ = N (batch_size), bottom_dim_ = C * H * W
+		// bottom_dim_ must be modified => FN * OH * OW
+		// need to cut? or just send?
+  		this->forward_cpu_gemm(bottom_data + n * this->bottom_dim_, weight,
+          top_data + n * this->top_dim_, false, true);
+/*
+      if(!is_1x1_ && !skip_im2col) {
+        col_buff = bottom_data + n * this->bottom_dim_;
+        conv_im2col_cpu(col_buff, col_buffer_.mutable_cpu_data());
+        col_buff = col_buffer_.cpu_data();
+      }
+*/
       if (this->bias_term_) {
         const Dtype* bias = this->blobs_[1]->cpu_data();
         this->forward_cpu_bias(top_data + n * this->top_dim_, bias);
+	//printf("test - i : %d, n : %d\n", temp, n);
       }
     }
   }
 }
 
 template <typename Dtype>
-void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
+void FirstConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
   const Dtype* weight = this->blobs_[0]->cpu_data();
   Dtype* weight_diff = this->blobs_[0]->mutable_cpu_diff();
@@ -73,9 +97,9 @@ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 }
 
 #ifdef CPU_ONLY
-STUB_GPU(ConvolutionLayer);
+STUB_GPU(FirstConvolutionLayer);
 #endif
 
-INSTANTIATE_CLASS(ConvolutionLayer);
+INSTANTIATE_CLASS(FirstConvolutionLayer);
 
 }  // namespace caffe

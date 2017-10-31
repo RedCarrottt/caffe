@@ -83,6 +83,7 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   int num_spatial_axes_;
   int bottom_dim_;
   int top_dim_;
+  int bottom_dim_im2col_;
 
   int channel_axis_;
   int num_;
