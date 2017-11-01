@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+project( env_setup )
+find_package( OpenCV REQUIRED )
+add_executable( env_setup env_setup.cpp )
+target_link_libraries( env_setup ${OpenCV_LIBS} )

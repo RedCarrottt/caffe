@@ -1,0 +1,3 @@
+/home/halfways/ISP/caffe/test/env_setup/CMakeFiles/edit_cache.dir
+/home/halfways/ISP/caffe/test/env_setup/CMakeFiles/rebuild_cache.dir
+/home/halfways/ISP/caffe/test/env_setup/CMakeFiles/env_setup.dir

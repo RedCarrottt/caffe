@@ -18,7 +18,7 @@
 
 using namespace std;
 
-/*
+
 cv::Mat ReadImageToCVMat (const char* filename, 
 		const int height, const int width, const bool is_color) {
 	cv::Mat cv_img;
@@ -36,7 +36,8 @@ cv::Mat ReadImageToCVMat (const char* filename,
 	}
 	return cv_img;
 }
-*/
+
+
 int main() {
 	char root_folder[1024], source[1024];
     //int new_height = 256, new_width = 256;
@@ -52,9 +53,9 @@ int main() {
 	strcat(root_folder, source);
 	strcpy(source, root_folder);
 	//printf("%s\n", source);
-	//cv::Mat cv_img = ReadImageToCVMat(source, 0, 0, true);
-	cv::Mat cv_img;
-    
+	cv::Mat cv_img = ReadImageToCVMat(source, 0, 0, true);
+
+	cout << cv_img;
 
 
 	return 0;
