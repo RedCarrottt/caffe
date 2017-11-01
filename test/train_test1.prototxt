@@ -1,7 +1,7 @@
-name: "Image_Data_Im2Col_Test"
+name: "Image_Data_Test"
 layer {
   name: "data"
-  type: "ImageDataIm2Col"
+  type: "ImageData"
   top: "data"
   top: "label"
   include {
@@ -10,38 +10,34 @@ layer {
   transform_param {
     crop_size: 227
   }
-  image_data_im2col_param {
+  image_data_param {
     source: "test/train.txt"
-    batch_size: 15
+    batch_size: 64
 	new_height: 256
 	new_width: 256
-	kernel_size: 5
-	stride: 1
   }
 }
 layer {
   name: "data"
-  type: "ImageDataIm2Col"
+  type: "ImageData"
   top: "data"
   top: "label"
   include {
     phase: TEST
   }
   transform_param {
-	crop_size: 227
+    crop_size: 227
   }
-  image_data_im2col_param {
+  image_data_param {
     source: "test/test.txt"
-    batch_size: 15
+    batch_size: 100
 	new_height: 256
 	new_width: 256
-	kernel_size: 5
-	stride: 1
   }
 }
 layer {
   name: "conv1"
-  type: "FirstConvolution"
+  type: "Convolution"
   bottom: "data"
   top: "conv1"
   param {
@@ -50,7 +46,7 @@ layer {
   param {
     lr_mult: 2
   }
-  first_convolution_param {
+  convolution_param {
     num_output: 20
     kernel_size: 5
     stride: 1
