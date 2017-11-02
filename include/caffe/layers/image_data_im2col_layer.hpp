@@ -14,6 +14,8 @@
 
 #include "caffe/util/im2col.hpp"
 
+#include <unistd.h>
+
 namespace caffe {
 
 /**
@@ -87,6 +89,15 @@ class ImageDataIm2ColLayer : public BasePrefetchingDataLayer<Dtype> {
         col_buff);
     }
   }
+};
+
+struct _im2col_param {
+	int conv_in_channels;
+	int conv_input_shape[2];
+	int kernel_shape[2];
+	int pad[2];
+	int stride[2];
+	int dilation[2];
 };
 
 

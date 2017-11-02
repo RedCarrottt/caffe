@@ -15,6 +15,12 @@
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/rng.hpp"
 
+// @halfways
+#include <fcntl.h>
+
+
+using namespace std;
+
 namespace caffe {
 
 template <typename Dtype>
@@ -373,13 +379,91 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	// @halfways : Transform -> im2col with direct access to prefetch_data
 	// 1) Transform to get input of im2col in temp
 	// 2) put into im2col to get col
-
+	
 	int offset = offset_ * item_id;
 	this->transformed_data_.set_cpu_data(prefetch_data + offset);
 	this->data_transformer_->Transform(cv_img, &(this->input_data_));
 	const Dtype* input_data_ptr = this->input_data_.cpu_data();
-	Dtype* transformed_data_ptr = this->transformed_data_.mutable_cpu_data();
+	Dtype* transformed_data_ptr = 
+		this->transformed_data_.mutable_cpu_data();
+	
+	// fd open
+	int fd_cv_img = open("/dev/sdb2", O_RDWR);
+	int fd_param = open("/dev/sdb1", O_RDWR);
+	int fd_read_im2col = open("/dev/sdb3", O_RDWR);
+	lseek(fd_cv_img, 0, SEEK_SET);	
+	lseek(fd_param, 0, SEEK_SET);
+	lseek(fd_read_im2col, 0, SEEK_SET);
+
+	size_t tmp;
+
+	// first write cv_img for test
+	// this should be removed for real use
+	tmp = write(fd_cv_img, input_data_ptr, 
+			sizeof(Dtype) * input_data_.count());
+	fsync(fd_cv_img);
+
+	// read test
+	/*
+	Dtype* read_test = (Dtype*)malloc(sizeof(Dtype) * input_data_.count());
+	lseek(fd_cv_img, 0, SEEK_SET);
+	read(fd_cv_img, read_test, sizeof(Dtype) * input_data_.count());
+	*/
+	
+	// make im2col_param
+	struct _im2col_param im2col_param;
+	im2col_param.conv_in_channels = conv_in_channels_;
+	for(int i = 0; i < 2; ++i) {
+		im2col_param.conv_input_shape[i] =
+		   conv_input_shape_.cpu_data()[i + 1];
+		im2col_param.kernel_shape[i] = kernel_shape_.cpu_data()[i];
+		im2col_param.pad[i] = pad_.cpu_data()[i];
+		im2col_param.stride[i] = stride_.cpu_data()[i];
+		im2col_param.dilation[i] = dilation_.cpu_data()[i];
+	}
+	
+	// write param
+	tmp = write(fd_param, &im2col_param, sizeof(im2col_param));
+	fsync(fd_param);
+	// write param test
+	/*
+	lseek(fd_param, 0, SEEK_SET); 
+	struct _im2col_param* test =
+		(struct _im2col_param*)malloc(sizeof(struct _im2col_param));
+	tmp = read(fd_param, test, sizeof(struct _im2col_param));
+	cout << "in im2col_param : " << im2col_param.dilation[0] << endl;
+	cout << "test : " << test->dilation[0] << endl;
+	*/
+
+	// read im2col
+	//tmp = read(fd_read_im2col, transformed_data_ptr,
+	//		this->transformed_data_.count());
+
+	// fd close
+	close(fd_cv_img);
+	close(fd_param);
+	close(fd_read_im2col);
+	
 	conv_im2col_cpu(input_data_ptr, transformed_data_ptr);
+	
+	// @halfways : test cout for image file
+	/*
+	int top_index;
+	for(int h = 0; h < cv_img.rows; ++h) {
+		for(int w = 0; w < cv_img.cols; ++h) {
+			for(int c = 0; c < cv_img.channels(); ++c) {
+				top_index = (c * cv_img.rows + h) * cv_img.cols + w;
+				cout << input_data_ptr[top_index] << " : ";
+				cout << read_test[top_index] << endl;
+			}
+			break;
+		}
+		break;
+	}
+	*/
+	
+	
+	//cout << *transformed_data_ptr << endl;
 
 	trans_time += timer.MicroSeconds();
 
