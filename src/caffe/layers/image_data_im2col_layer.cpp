@@ -312,7 +312,7 @@ void ImageDataIm2ColLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bot
   // @halfways : write param to ftl
 
 	// open fd for partition_param
-	int fd_param = open("/dev/sda1", O_RDWR);
+	int fd_param = open("/dev/sdb1", O_RDWR);
 	lseek(fd_param, 0, SEEK_SET);	
 
 	// make im2col_param
@@ -333,6 +333,7 @@ void ImageDataIm2ColLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bot
 	
 	close(fd_param);
 
+	this->batch_cnt = 0;
 // @halfways : check point - col_buffer_ + kernel_dim_
 }
 
@@ -376,6 +377,7 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
   Dtype* prefetch_data = batch->data_.mutable_cpu_data();
   Dtype* prefetch_label = batch->label_.mutable_cpu_data();
 
+	printf("load batch %d...\n", this->batch_cnt++);
   // datum scales
   const int lines_size = lines_.size();
   for (int item_id = 0; item_id < batch_size; ++item_id) {
@@ -404,14 +406,46 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 		this->transformed_data_.mutable_cpu_data();
 	
 	// fd open
-	int fd_cv_img = open("/dev/sda2", O_RDWR);
-	int fd_read_im2col = open("/dev/sda3", O_RDWR);
+	int fd_trigger = open("/dev/sdb1", O_RDWR);
+	int fd_cv_img = open("/dev/sdb2", O_RDWR);
+	int fd_read_im2col = open("/dev/sdb3", O_RDWR);
 	lseek(fd_cv_img, 0, SEEK_SET);	
 	lseek(fd_read_im2col, 0, SEEK_SET);
 
 	// first write cv_img for test
 	write(fd_cv_img, input_data_ptr, sizeof(Dtype) * input_data_.count());
 	fsync(fd_cv_img);
+
+	int tmp = 0;
+	lseek(fd_trigger, 2048 * 512, SEEK_SET);
+	write(fd_trigger, &tmp, sizeof(tmp));
+	fsync(fd_trigger);
+	
+	// wait for im2col in ftl
+	/*
+	Dtype flag_wait = 0;
+	while(1) {
+		lseek(fd_read_im2col, 0, SEEK_SET);
+		read(fd_read_im2col, &flag_wait, sizeof(flag_wait));
+		if(flag_wait) {
+			printf("first im2col data out\n");
+			break;
+		}
+	}
+	*/
+
+	// im2col param read test
+	// unable because it is not actually written on NAND
+	// only written on DRAM buffer
+	/*
+	struct _im2col_param im2col_param;
+	struct _im2col_param* ptr_im2col_param = &im2col_param;
+	lseek(fd_trigger, 0, SEEK_SET);
+  read(fd_trigger, ptr_im2col_param, sizeof(im2col_param));
+	for(int i = 0; i < 10; i++) {
+		printf("im2col_param : %d\n", *(ptr_im2col_param++));
+	}
+  */
 
 	// read test
 	/*
@@ -421,8 +455,9 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	*/
 	
 	// read im2coled data
+	//lseek(fd_read_im2col, 0, SEEK_SET);
 	//read(fd_read_im2col, transformed_data_ptr,
-	//		this->transformed_data_.count());
+	//		sizeof(Dtype) * this->transformed_data_.count());
 
 	// fd close
 	close(fd_cv_img);
@@ -432,22 +467,30 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	
 	// @halfways : test cout for image file
 	/*
+	int cnt = 0;
 	int top_index;
+
 	for(int h = 0; h < cv_img.rows; ++h) {
 		for(int w = 0; w < cv_img.cols; ++h) {
 			for(int c = 0; c < cv_img.channels(); ++c) {
 				top_index = (c * cv_img.rows + h) * cv_img.cols + w;
-				cout << input_data_ptr[top_index] << " : ";
-				cout << read_test[top_index] << endl;
+				
+				if(input_data_ptr[top_index] != 0 &&
+					 input_data_ptr[top_index] == transformed_data_ptr[top_index]) {
+					cout << input_data_ptr[top_index] << " : ";
+				  cout << transformed_data_ptr[top_index] << endl;
+				}
+				else {
+					cnt++;
+					if(cnt % 0 == 0) {
+						printf("not yet matched... %d\n", cnt);
+					}
+				}
 			}
 			break;
 		}
-		break;
 	}
 	*/
-	
-	
-	//cout << *transformed_data_ptr << endl;
 
 	trans_time += timer.MicroSeconds();
 

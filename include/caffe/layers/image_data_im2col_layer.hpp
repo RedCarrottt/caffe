@@ -89,6 +89,8 @@ class ImageDataIm2ColLayer : public BasePrefetchingDataLayer<Dtype> {
         col_buff);
     }
   }
+
+	int batch_cnt;
 };
 
 struct _im2col_param {
