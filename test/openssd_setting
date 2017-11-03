@@ -1,0 +1,6 @@
+sudo fdisk -l
+make partition for
+	param : 2,048(2K) - 8,191(8K)
+	cv_img : 8,192(8K) - 2,097,151(1GB)
+	im2col : 2,097,152 - ~
+
