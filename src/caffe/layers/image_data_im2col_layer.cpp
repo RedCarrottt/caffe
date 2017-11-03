@@ -308,15 +308,31 @@ void ImageDataIm2ColLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bot
   LOG(INFO) << "output data size: " << top[0]->num() << ","
  	  << top[0]->channels() << "," << top[0]->height() << ","
  	  << top[0]->width();
-  
-  /*
-  // label
-  vector<int> label_shape(1, batch_size);
-  top[1]->Reshape(label_shape);
-  for (int i = 0; i < this->prefetch_.size(); ++i) {
-    this->prefetch_[i]->label_.Reshape(label_shape);
-  }
-  */
+
+  // @halfways : write param to ftl
+
+	// open fd for partition_param
+	int fd_param = open("/dev/sda1", O_RDWR);
+	lseek(fd_param, 0, SEEK_SET);	
+
+	// make im2col_param
+	struct _im2col_param im2col_param;
+	im2col_param.conv_in_channels = conv_in_channels_;
+	for(int i = 0; i < 2; ++i) {
+		im2col_param.conv_input_shape[i] =
+		   conv_input_shape_.cpu_data()[i + 1];
+		im2col_param.kernel_shape[i] = kernel_shape_.cpu_data()[i];
+		im2col_param.pad[i] = pad_.cpu_data()[i];
+		im2col_param.stride[i] = stride_.cpu_data()[i];
+		im2col_param.dilation[i] = dilation_.cpu_data()[i];
+	}
+	
+	// write param
+	write(fd_param, &im2col_param, sizeof(im2col_param));
+	fsync(fd_param);
+	
+	close(fd_param);
+
 // @halfways : check point - col_buffer_ + kernel_dim_
 }
 
@@ -388,19 +404,13 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 		this->transformed_data_.mutable_cpu_data();
 	
 	// fd open
-	int fd_cv_img = open("/dev/sdb2", O_RDWR);
-	int fd_param = open("/dev/sdb1", O_RDWR);
-	int fd_read_im2col = open("/dev/sdb3", O_RDWR);
+	int fd_cv_img = open("/dev/sda2", O_RDWR);
+	int fd_read_im2col = open("/dev/sda3", O_RDWR);
 	lseek(fd_cv_img, 0, SEEK_SET);	
-	lseek(fd_param, 0, SEEK_SET);
 	lseek(fd_read_im2col, 0, SEEK_SET);
 
-	size_t tmp;
-
 	// first write cv_img for test
-	// this should be removed for real use
-	tmp = write(fd_cv_img, input_data_ptr, 
-			sizeof(Dtype) * input_data_.count());
+	write(fd_cv_img, input_data_ptr, sizeof(Dtype) * input_data_.count());
 	fsync(fd_cv_img);
 
 	// read test
@@ -410,38 +420,12 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	read(fd_cv_img, read_test, sizeof(Dtype) * input_data_.count());
 	*/
 	
-	// make im2col_param
-	struct _im2col_param im2col_param;
-	im2col_param.conv_in_channels = conv_in_channels_;
-	for(int i = 0; i < 2; ++i) {
-		im2col_param.conv_input_shape[i] =
-		   conv_input_shape_.cpu_data()[i + 1];
-		im2col_param.kernel_shape[i] = kernel_shape_.cpu_data()[i];
-		im2col_param.pad[i] = pad_.cpu_data()[i];
-		im2col_param.stride[i] = stride_.cpu_data()[i];
-		im2col_param.dilation[i] = dilation_.cpu_data()[i];
-	}
-	
-	// write param
-	tmp = write(fd_param, &im2col_param, sizeof(im2col_param));
-	fsync(fd_param);
-	// write param test
-	/*
-	lseek(fd_param, 0, SEEK_SET); 
-	struct _im2col_param* test =
-		(struct _im2col_param*)malloc(sizeof(struct _im2col_param));
-	tmp = read(fd_param, test, sizeof(struct _im2col_param));
-	cout << "in im2col_param : " << im2col_param.dilation[0] << endl;
-	cout << "test : " << test->dilation[0] << endl;
-	*/
-
-	// read im2col
-	//tmp = read(fd_read_im2col, transformed_data_ptr,
+	// read im2coled data
+	//read(fd_read_im2col, transformed_data_ptr,
 	//		this->transformed_data_.count());
 
 	// fd close
 	close(fd_cv_img);
-	close(fd_param);
 	close(fd_read_im2col);
 	
 	conv_im2col_cpu(input_data_ptr, transformed_data_ptr);
