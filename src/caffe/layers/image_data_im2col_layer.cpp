@@ -17,7 +17,7 @@
 
 // @halfways
 #include <fcntl.h>
-
+#include <unistd.h>
 
 using namespace std;
 
@@ -377,7 +377,8 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
   Dtype* prefetch_data = batch->data_.mutable_cpu_data();
   Dtype* prefetch_label = batch->label_.mutable_cpu_data();
 
-	printf("load batch %d...\n", this->batch_cnt++);
+	int pid = getpid();
+	printf("load batch %d (%d)...\n", this->batch_cnt++, pid);
   // datum scales
   const int lines_size = lines_.size();
   for (int item_id = 0; item_id < batch_size; ++item_id) {
@@ -416,12 +417,12 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	write(fd_cv_img, input_data_ptr, sizeof(Dtype) * input_data_.count());
 	fsync(fd_cv_img);
 
+	// trigger im2col
 	int tmp = 0;
 	lseek(fd_trigger, 2048 * 512, SEEK_SET);
 	write(fd_trigger, &tmp, sizeof(tmp));
 	fsync(fd_trigger);
 	
-	// wait for im2col in ftl
 	/*
 	Dtype flag_wait = 0;
 	while(1) {
@@ -434,36 +435,16 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	}
 	*/
 
-	// im2col param read test
-	// unable because it is not actually written on NAND
-	// only written on DRAM buffer
-	/*
-	struct _im2col_param im2col_param;
-	struct _im2col_param* ptr_im2col_param = &im2col_param;
-	lseek(fd_trigger, 0, SEEK_SET);
-  read(fd_trigger, ptr_im2col_param, sizeof(im2col_param));
-	for(int i = 0; i < 10; i++) {
-		printf("im2col_param : %d\n", *(ptr_im2col_param++));
-	}
-  */
-
-	// read test
-	/*
-	Dtype* read_test = (Dtype*)malloc(sizeof(Dtype) * input_data_.count());
-	lseek(fd_cv_img, 0, SEEK_SET);
-	read(fd_cv_img, read_test, sizeof(Dtype) * input_data_.count());
-	*/
-	
 	// read im2coled data
-	//lseek(fd_read_im2col, 0, SEEK_SET);
-	//read(fd_read_im2col, transformed_data_ptr,
-	//		sizeof(Dtype) * this->transformed_data_.count());
+	lseek(fd_read_im2col, 0, SEEK_SET);
+	read(fd_read_im2col, transformed_data_ptr,
+			sizeof(Dtype) * this->transformed_data_.count());
 
 	// fd close
 	close(fd_cv_img);
 	close(fd_read_im2col);
 	
-	conv_im2col_cpu(input_data_ptr, transformed_data_ptr);
+	//conv_im2col_cpu(input_data_ptr, transformed_data_ptr);
 	
 	// @halfways : test cout for image file
 	/*
