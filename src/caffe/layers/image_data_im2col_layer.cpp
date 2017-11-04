@@ -421,6 +421,23 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	//lseek(fd, PARAM_LBN * BYTES_PER_SECTOR, SEEK_SET);
 	//write(fd, &im2col_param, sizeof(im2col_param));
 	//fsync(fd);
+
+	// input read test
+	lseek(fd, WRITE_LBN * BYTES_PER_SECTOR, SEEK_SET);
+	read(fd, transformed_data_ptr, sizeof(Dtype) * input_data_.count());
+	fsync(fd);
+
+	printf("input img sent  : ");
+	for(int i = 0; i < 10; i++) {
+		printf("%.0f ", input_data_ptr[i]);
+	}
+	cout << endl;
+
+	printf("input img rcvd : ");
+	for(int i = 0; i < 10; i++) {
+		printf("%.0f ", transformed_data_ptr[i]);
+	}
+	cout << endl;
 	
 	// trigger im2col
 	int tmp = 0;
