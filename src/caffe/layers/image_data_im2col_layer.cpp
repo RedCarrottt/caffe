@@ -312,8 +312,8 @@ void ImageDataIm2ColLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bot
   // @halfways : write param to ftl
 
 	// open fd for partition_param
-	//int fd_param = open("/dev/sdb", O_RDWR);
-	//lseek(fd_param, PARAM_LBN * BYTES_PER_SECTOR, SEEK_SET);
+	int fd_param = open("/dev/sdb", O_RDWR);
+	lseek(fd_param, PARAM_LBN * BYTES_PER_SECTOR, SEEK_SET);
 
 	// make im2col_param
 	//struct _im2col_param im2col_param;
@@ -328,10 +328,10 @@ void ImageDataIm2ColLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bot
 	}
 	
 	// write param
-	//write(fd_param, &im2col_param, sizeof(im2col_param));
-	//fsync(fd_param);
+	write(fd_param, &im2col_param, sizeof(im2col_param));
+	fsync(fd_param);
 	
-	//close(fd_param);
+	close(fd_param);
 	
 // @halfways : check point - col_buffer_ + kernel_dim_
 }
@@ -408,33 +408,26 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	Dtype* transformed_data_ptr = 
 		this->transformed_data_.mutable_cpu_data();
 	
-	//int pid = getpid();
 	// fd open
 	int fd = open("/dev/sdb", O_RDWR);
-	//int fd_cv_img = open("/dev/sdb2", O_RDWR);
-	//int fd_read_im2col = open("/dev/sdb3", O_RDWR);
-	//lseek(fd_cv_img, 0, SEEK_SET);	
-	//lseek(fd_read_im2col, 0, SEEK_SET);
 
 	// first write cv_img for test
 	lseek(fd, WRITE_LBN * BYTES_PER_SECTOR, SEEK_SET);
 	write(fd, input_data_ptr, sizeof(Dtype) * input_data_.count());
 	fsync(fd);
-	//printf("write cv_img done - size : %d\n",
-	//	 	sizeof(Dtype) * input_data_.count());
 
 	// pass im2col parameters
-	lseek(fd, PARAM_LBN * BYTES_PER_SECTOR, SEEK_SET);
-	write(fd, &im2col_param, sizeof(im2col_param));
-	fsync(fd);
+	//lseek(fd, PARAM_LBN * BYTES_PER_SECTOR, SEEK_SET);
+	//write(fd, &im2col_param, sizeof(im2col_param));
+	//fsync(fd);
 	
-	//printf("im2col triggered (%d)\n", pid);
 	// trigger im2col
 	int tmp = 0;
 	lseek(fd, TRIGGER_LBN * BYTES_PER_SECTOR, SEEK_SET);
 	write(fd, &tmp, sizeof(tmp));
 	fsync(fd);
-	//printf("im2col finished (%d)\n", pid);
+	
+	// wait for im2col
 	/*
 	Dtype flag_wait = 0;
 	while(1) {
@@ -461,11 +454,11 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	printf("ftl im2col : ");
 	for(int i = 0; i < 10; i++) {
 		if(cmp[i] != transformed_data_ptr[i]) {
-			cout << "(" << transformed_data_ptr[i] << ") ";
+			cout << transformed_data_ptr[i] << " ";
 			cmp[i] = transformed_data_ptr[i];
 		}
 		else {
-			cout << transformed_data_ptr[i] << " ";
+			cout << "(" << transformed_data_ptr[i] << ") ";
 		}
 	}
 	cout << endl;
