@@ -16,7 +16,22 @@
 
 #include <unistd.h>
 
+#define PARAM_LBN 2048
+#define TRIGGER_LBN 4096
+#define WRITE_LBN 8192
+#define READ_LBN 2097152
+#define BYTES_PER_SECTOR 512
+
 namespace caffe {
+
+struct _im2col_param {
+	int conv_in_channels;
+	int conv_input_shape[2];
+	int kernel_shape[2];
+	int pad[2];
+	int stride[2];
+	int dilation[2];
+};
 
 /**
  * @brief Provides data to the Net from image files.
@@ -90,18 +105,8 @@ class ImageDataIm2ColLayer : public BasePrefetchingDataLayer<Dtype> {
     }
   }
 
-	int batch_cnt;
+	struct _im2col_param im2col_param;
 };
-
-struct _im2col_param {
-	int conv_in_channels;
-	int conv_input_shape[2];
-	int kernel_shape[2];
-	int pad[2];
-	int stride[2];
-	int dilation[2];
-};
-
 
 }  // namespace caffe
 
