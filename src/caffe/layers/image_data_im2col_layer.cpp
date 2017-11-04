@@ -371,6 +371,7 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
   this->input_data_.Reshape(top_shape);
   // Reshape batch according to the batch_size.
   top_shape[0] = batch_size;
+	batch->data_.Reshape(col_buffer_shape_); // @halfways
   batch->data_.Reshape(top_shape);
 
   Dtype* prefetch_data = batch->data_.mutable_cpu_data();
@@ -440,26 +441,22 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	}
 	*/
 
-	Dtype cmp[10];
-	for(int i = 0; i < 10; i++) {
-		cmp[i] = transformed_data_ptr[i];
-	}
-
 	// read im2coled data
 	lseek(fd, READ_LBN * BYTES_PER_SECTOR, SEEK_SET);
 	read(fd, transformed_data_ptr, sizeof(Dtype) * offset_);
 
   //printf("read im2col done - size : %d\n", sizeof(Dtype) * offset_);
   
-	printf("ftl im2col : ");
+	printf("input img sent  : ");
 	for(int i = 0; i < 10; i++) {
-		if(cmp[i] != transformed_data_ptr[i]) {
-			cout << transformed_data_ptr[i] << " ";
-			cmp[i] = transformed_data_ptr[i];
-		}
-		else {
-			cout << "(" << transformed_data_ptr[i] << ") ";
-		}
+		printf("%.0f ", input_data_ptr[i]);
+	}
+	cout << endl;
+	
+
+	printf("ftl im2col rcvd : ");
+	for(int i = 0; i < 10; i++) {
+		printf("%.0f ", transformed_data_ptr[i]);
 	}
 	cout << endl;
 
@@ -468,11 +465,20 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	
 	conv_im2col_cpu(input_data_ptr, transformed_data_ptr);
 
-  printf("host im2col: ");
+	printf("host im2col rcvd: ");
 	for(int i = 0; i < 10; i++) {
-		cout << transformed_data_ptr[i] << " ";
+		printf("%.0f ", transformed_data_ptr[i]);
 	}
 	cout << endl;
+
+  //printf("--------host im2col------ \n");
+	//for(int i = 0; i < 5; i++) {
+		//cout << transformed_data_ptr[i] << " ";
+	//	printf("int : %d, float : %f, float(cast) : %f\n",
+	//		 	transformed_data_ptr[i], transformed_data_ptr[i],
+	//		 	(float)transformed_data_ptr[i]);
+	//}
+	//cout << endl;
 
 	// @halfways : test cout for image file
 	/*
