@@ -411,22 +411,26 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	
 	// fd open
 	int fd = open("/dev/sdb", O_RDWR);
+	ssize_t n;
 
 	// first write cv_img for test
 	lseek(fd, WRITE_LBN * BYTES_PER_SECTOR, SEEK_SET);
-	write(fd, input_data_ptr, sizeof(Dtype) * input_data_.count());
+	n = write(fd, input_data_ptr, sizeof(Dtype) * input_data_.count());
 	fsync(fd);
-
+	printf("write size : %d\n", n);
+	
 	// pass im2col parameters
 	//lseek(fd, PARAM_LBN * BYTES_PER_SECTOR, SEEK_SET);
 	//write(fd, &im2col_param, sizeof(im2col_param));
 	//fsync(fd);
-
+	
+	/*
 	// input read test
 	lseek(fd, WRITE_LBN * BYTES_PER_SECTOR, SEEK_SET);
-	read(fd, transformed_data_ptr, sizeof(Dtype) * input_data_.count());
-	fsync(fd);
-
+	n = read(fd, transformed_data_ptr,
+		 	sizeof(Dtype) * input_data_.count());
+	
+	printf("read size : %d\n", n);
 	printf("input img sent  : ");
 	for(int i = 0; i < 10; i++) {
 		printf("%.0f ", input_data_ptr[i]);
@@ -438,7 +442,7 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 		printf("%.0f ", transformed_data_ptr[i]);
 	}
 	cout << endl;
-	
+	*/
 	// trigger im2col
 	int tmp = 0;
 	lseek(fd, TRIGGER_LBN * BYTES_PER_SECTOR, SEEK_SET);
@@ -462,31 +466,24 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	lseek(fd, READ_LBN * BYTES_PER_SECTOR, SEEK_SET);
 	read(fd, transformed_data_ptr, sizeof(Dtype) * offset_);
 
-  //printf("read im2col done - size : %d\n", sizeof(Dtype) * offset_);
+  printf("read im2col done - size : %d\n", sizeof(Dtype) * offset_);
   
-	printf("input img sent  : ");
-	for(int i = 0; i < 10; i++) {
-		printf("%.0f ", input_data_ptr[i]);
-	}
-	cout << endl;
-	
-
 	printf("ftl im2col rcvd : ");
 	for(int i = 0; i < 10; i++) {
 		printf("%.0f ", transformed_data_ptr[i]);
 	}
 	cout << endl;
-
+  
 	// fd close
 	close(fd);
-	
+	exit(0);
 	conv_im2col_cpu(input_data_ptr, transformed_data_ptr);
 
-	printf("host im2col rcvd: ");
-	for(int i = 0; i < 10; i++) {
-		printf("%.0f ", transformed_data_ptr[i]);
-	}
-	cout << endl;
+	//printf("host im2col rcvd: ");
+	//for(int i = 0; i < 10; i++) {
+	//	printf("%.0f ", transformed_data_ptr[i]);
+	//}
+	//cout << endl;
 
   //printf("--------host im2col------ \n");
 	//for(int i = 0; i < 5; i++) {
