@@ -419,37 +419,23 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	fsync(fd);
 	printf("write size : %d\n", n);
 	
-	// pass im2col parameters
-	//lseek(fd, PARAM_LBN * BYTES_PER_SECTOR, SEEK_SET);
-	//write(fd, &im2col_param, sizeof(im2col_param));
-	//fsync(fd);
-	
-	/*
-	// input read test
-	lseek(fd, WRITE_LBN * BYTES_PER_SECTOR, SEEK_SET);
-	n = read(fd, transformed_data_ptr,
-		 	sizeof(Dtype) * input_data_.count());
-	
-	printf("read size : %d\n", n);
 	printf("input img sent  : ");
 	for(int i = 0; i < 10; i++) {
 		printf("%.0f ", input_data_ptr[i]);
 	}
 	cout << endl;
-
-	printf("input img rcvd : ");
-	for(int i = 0; i < 10; i++) {
-		printf("%.0f ", transformed_data_ptr[i]);
-	}
-	cout << endl;
-	*/
+	
 	// trigger im2col
 	int tmp = 0;
 	lseek(fd, TRIGGER_LBN * BYTES_PER_SECTOR, SEEK_SET);
 	write(fd, &tmp, sizeof(tmp));
 	fsync(fd);
-	
+
 	// wait for im2col
+	//printf("wait for im2col...\n");
+	//sleep(5);
+	//printf("resume...\n");
+	
 	/*
 	Dtype flag_wait = 0;
 	while(1) {
@@ -466,7 +452,9 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	lseek(fd, READ_LBN * BYTES_PER_SECTOR, SEEK_SET);
 	read(fd, transformed_data_ptr, sizeof(Dtype) * offset_);
 
-  printf("read im2col done - size : %d\n", sizeof(Dtype) * offset_);
+	// wait for read
+	//sleep(60);
+  //printf("read im2col done - size : %d\n", sizeof(Dtype) * offset_);
   
 	printf("ftl im2col rcvd : ");
 	for(int i = 0; i < 10; i++) {
@@ -476,7 +464,9 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
   
 	// fd close
 	close(fd);
+	
 	exit(0);
+	
 	conv_im2col_cpu(input_data_ptr, transformed_data_ptr);
 
 	//printf("host im2col rcvd: ");
