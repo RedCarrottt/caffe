@@ -1,0 +1,30 @@
+CXX src/caffe/layers/image_data_layer.cpp
+src/caffe/layers/image_data_layer.cpp: In instantiation of ‘void caffe::ImageDataLayer<Dtype>::DataLayerSetUp(const std::vector<caffe::Blob<Dtype>*>&, const std::vector<caffe::Blob<Dtype>*>&) [with Dtype = float]’:
+src/caffe/layers/image_data_layer.cpp:399:1:   required from here
+src/caffe/layers/image_data_layer.cpp:284:3: error: request for member ‘Reshape’ in ‘(& top)->std::vector<_Tp, _Alloc>::operator[]<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> >(0ul)’, which is of pointer type ‘caffe::Blob<float>* const’ (maybe you meant to use ‘->’ ?)
+   top[0].Reshape(col_buffer_shape_);
+   ^
+In file included from src/caffe/layers/image_data_layer.cpp:12:0:
+./include/caffe/layers/image_data_layer.hpp: In instantiation of ‘void caffe::ImageDataLayer<Dtype>::conv_im2col_cpu(const Dtype*, Dtype*) [with Dtype = float]’:
+src/caffe/layers/image_data_layer.cpp:399:1:   required from here
+./include/caffe/layers/image_data_layer.hpp:74:17: error: ‘im2col_cpu’ was not declared in this scope
+       im2col_cpu(data, conv_in_channels_, 
+                 ^
+./include/caffe/layers/image_data_layer.hpp:82:20: error: ‘im2col_nd_cpu’ was not declared in this scope
+       im2col_nd_cpu(data, num_spatial_axes_, conv_input_shape_.cpu_data(),
+                    ^
+src/caffe/layers/image_data_layer.cpp: In instantiation of ‘void caffe::ImageDataLayer<Dtype>::DataLayerSetUp(const std::vector<caffe::Blob<Dtype>*>&, const std::vector<caffe::Blob<Dtype>*>&) [with Dtype = double]’:
+src/caffe/layers/image_data_layer.cpp:399:1:   required from here
+src/caffe/layers/image_data_layer.cpp:284:3: error: request for member ‘Reshape’ in ‘(& top)->std::vector<_Tp, _Alloc>::operator[]<caffe::Blob<double>*, std::allocator<caffe::Blob<double>*> >(0ul)’, which is of pointer type ‘caffe::Blob<double>* const’ (maybe you meant to use ‘->’ ?)
+   top[0].Reshape(col_buffer_shape_);
+   ^
+In file included from src/caffe/layers/image_data_layer.cpp:12:0:
+./include/caffe/layers/image_data_layer.hpp: In instantiation of ‘void caffe::ImageDataLayer<Dtype>::conv_im2col_cpu(const Dtype*, Dtype*) [with Dtype = double]’:
+src/caffe/layers/image_data_layer.cpp:399:1:   required from here
+./include/caffe/layers/image_data_layer.hpp:74:17: error: ‘im2col_cpu’ was not declared in this scope
+       im2col_cpu(data, conv_in_channels_, 
+                 ^
+./include/caffe/layers/image_data_layer.hpp:82:20: error: ‘im2col_nd_cpu’ was not declared in this scope
+       im2col_nd_cpu(data, num_spatial_axes_, conv_input_shape_.cpu_data(),
+                    ^
+Makefile:581: recipe for target '.build_release/src/caffe/layers/image_data_layer.o' failed

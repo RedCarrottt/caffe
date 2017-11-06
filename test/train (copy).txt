@@ -1,0 +1,15 @@
+/home/halfways/ISP/caffe/test/cat.jpg 0
+/home/halfways/ISP/caffe/test/cat.jpg 0
+/home/halfways/ISP/caffe/test/cat.jpg 0
+/home/halfways/ISP/caffe/test/cat.jpg 0
+/home/halfways/ISP/caffe/test/cat.jpg 0
+/home/halfways/ISP/caffe/test/cat.jpg 0
+/home/halfways/ISP/caffe/test/cat.jpg 0
+/home/halfways/ISP/caffe/test/cat.jpg 0
+/home/halfways/ISP/caffe/test/cat.jpg 0
+/home/halfways/ISP/caffe/test/cat.jpg 0
+/home/halfways/ISP/caffe/test/cat.jpg 0
+/home/halfways/ISP/caffe/test/cat.jpg 0
+/home/halfways/ISP/caffe/test/cat.jpg 0
+/home/halfways/ISP/caffe/test/cat.jpg 0
+/home/halfways/ISP/caffe/test/cat.jpg 0

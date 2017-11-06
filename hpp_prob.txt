@@ -1,0 +1,89 @@
+CXX src/caffe/layers/image_data_layer.cpp
+src/caffe/layers/image_data_layer.cpp: In member function ‘virtual void caffe::ImageDataLayer<Dtype>::DataLayerSetUp(const std::vector<caffe::Blob<Dtype>*>&, const std::vector<caffe::Blob<Dtype>*>&)’:
+src/caffe/layers/image_data_layer.cpp:112:3: error: ‘force_nd_im2col_’ was not declared in this scope
+   force_nd_im2col_ = conv_param.force_nd_im2col();
+   ^
+src/caffe/layers/image_data_layer.cpp:113:3: error: ‘channel_axis_’ was not declared in this scope
+   channel_axis_ = top[0]->CanonicalAxisIndex(conv_param.axis());
+   ^
+src/caffe/layers/image_data_layer.cpp:122:3: error: ‘num_spatial_axes_’ was not declared in this scope
+   num_spatial_axes_ = num_axes - first_spatial_axis; // 2
+   ^
+src/caffe/layers/image_data_layer.cpp:126:3: error: ‘kernel_shape_’ was not declared in this scope
+   kernel_shape_.Reshape(spatial_dim_blob_shape);
+   ^
+src/caffe/layers/image_data_layer.cpp:150:3: error: ‘stride_’ was not declared in this scope
+   stride_.Reshape(spatial_dim_blob_shape);
+   ^
+src/caffe/layers/image_data_layer.cpp:174:3: error: ‘pad_’ was not declared in this scope
+   pad_.Reshape(spatial_dim_blob_shape);
+   ^
+src/caffe/layers/image_data_layer.cpp:197:3: error: ‘dilation_’ was not declared in this scope
+   dilation_.Reshape(spatial_dim_blob_shape);
+   ^
+src/caffe/layers/image_data_layer.cpp:212:3: error: ‘is_1x1_’ was not declared in this scope
+   is_1x1_ = true;
+   ^
+src/caffe/layers/image_data_layer.cpp:219:3: error: ‘channels_’ was not declared in this scope
+   channels_ = top[0]->shape(channel_axis_);
+   ^
+src/caffe/layers/image_data_layer.cpp:220:3: error: ‘group_’ was not declared in this scope
+   group_ = this->layer_param_.convolution_param().group();
+   ^
+src/caffe/layers/image_data_layer.cpp:222:7: error: expected primary-expression before ‘<<’ token
+       << "Number of output should be multiples of group.";
+       ^
+src/caffe/layers/image_data_layer.cpp:223:3: error: ‘conv_in_channels_’ was not declared in this scope
+   conv_in_channels_ = channels_;
+   ^
+src/caffe/layers/image_data_layer.cpp:224:3: error: ‘conv_out_channels_’ was not declared in this scope
+   conv_out_channels_ = num_output_;
+   ^
+src/caffe/layers/image_data_layer.cpp:224:24: error: ‘num_output_’ was not declared in this scope
+   conv_out_channels_ = num_output_;
+                        ^
+src/caffe/layers/image_data_layer.cpp:228:3: error: ‘kernel_dim_’ was not declared in this scope
+   kernel_dim_ = conv_in_channels_ 
+   ^
+src/caffe/layers/image_data_layer.cpp:238:3: error: ‘conv_input_shape_’ was not declared in this scope
+   conv_input_shape_.Reshape(top_dim_blob_shape);
+   ^
+src/caffe/layers/image_data_layer.cpp:254:3: error: ‘offset_’ was not declared in this scope
+   offset_ = 1;
+   ^
+src/caffe/layers/image_data_layer.cpp:255:3: error: ‘col_buffer_shape_’ was not declared in this scope
+   col_buffer_shape_.clear();
+   ^
+src/caffe/layers/image_data_layer.cpp:304:26: error: redeclaration of ‘std::vector<int> label_shape’
+   vector<int> label_shape(1, batch_size);
+                          ^
+src/caffe/layers/image_data_layer.cpp:102:15: note: ‘std::vector<int> label_shape’ previously declared here
+   vector<int> label_shape(1, batch_size);
+               ^
+src/caffe/layers/image_data_layer.cpp: In instantiation of ‘void caffe::ImageDataLayer<Dtype>::DataLayerSetUp(const std::vector<caffe::Blob<Dtype>*>&, const std::vector<caffe::Blob<Dtype>*>&) [with Dtype = float]’:
+src/caffe/layers/image_data_layer.cpp:398:1:   required from here
+src/caffe/layers/image_data_layer.cpp:83:3: error: ‘class caffe::ImageDataLayer<float>’ has no member named ‘input_data_’
+   this->input_data_.Reshape(top_shape);
+   ^
+src/caffe/layers/image_data_layer.cpp:284:3: error: request for member ‘Reshape’ in ‘(& top)->std::vector<_Tp, _Alloc>::operator[]<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> >(0ul)’, which is of pointer type ‘caffe::Blob<float>* const’ (maybe you meant to use ‘->’ ?)
+   top[0].Reshape(col_buffer_shape_);
+   ^
+src/caffe/layers/image_data_layer.cpp: In instantiation of ‘void caffe::ImageDataLayer<Dtype>::load_batch(caffe::Batch<Dtype>*) [with Dtype = float]’:
+src/caffe/layers/image_data_layer.cpp:398:1:   required from here
+src/caffe/layers/image_data_layer.cpp:345:3: error: ‘class caffe::ImageDataLayer<float>’ has no member named ‘input_data_’
+   this->input_data_.Reshape(top_shape);
+   ^
+src/caffe/layers/image_data_layer.cpp: In instantiation of ‘void caffe::ImageDataLayer<Dtype>::DataLayerSetUp(const std::vector<caffe::Blob<Dtype>*>&, const std::vector<caffe::Blob<Dtype>*>&) [with Dtype = double]’:
+src/caffe/layers/image_data_layer.cpp:398:1:   required from here
+src/caffe/layers/image_data_layer.cpp:83:3: error: ‘class caffe::ImageDataLayer<double>’ has no member named ‘input_data_’
+   this->input_data_.Reshape(top_shape);
+   ^
+src/caffe/layers/image_data_layer.cpp:284:3: error: request for member ‘Reshape’ in ‘(& top)->std::vector<_Tp, _Alloc>::operator[]<caffe::Blob<double>*, std::allocator<caffe::Blob<double>*> >(0ul)’, which is of pointer type ‘caffe::Blob<double>* const’ (maybe you meant to use ‘->’ ?)
+   top[0].Reshape(col_buffer_shape_);
+   ^
+src/caffe/layers/image_data_layer.cpp: In instantiation of ‘void caffe::ImageDataLayer<Dtype>::load_batch(caffe::Batch<Dtype>*) [with Dtype = double]’:
+src/caffe/layers/image_data_layer.cpp:398:1:   required from here
+src/caffe/layers/image_data_layer.cpp:345:3: error: ‘class caffe::ImageDataLayer<double>’ has no member named ‘input_data_’
+   this->input_data_.Reshape(top_shape);
+   ^
+Makefile:581: recipe for target '.build_release/src/caffe/layers/image_data_layer.o' failed

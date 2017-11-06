@@ -13,10 +13,10 @@ layer {
   image_data_im2col_param {
     source: "test/train.txt"
     batch_size: 15
-	new_height: 256
-	new_width: 256
-	kernel_size: 5
-	stride: 1
+		new_height: 256
+		new_width: 256
+		kernel_size: 5
+		stride: 1
   }
 }
 layer {
@@ -28,15 +28,15 @@ layer {
     phase: TEST
   }
   transform_param {
-	crop_size: 227
+		crop_size: 227
   }
   image_data_im2col_param {
     source: "test/test.txt"
     batch_size: 15
-	new_height: 256
-	new_width: 256
-	kernel_size: 5
-	stride: 1
+		new_height: 256
+		new_width: 256
+		kernel_size: 5
+		stride: 1
   }
 }
 layer {

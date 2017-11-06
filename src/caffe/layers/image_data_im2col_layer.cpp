@@ -417,13 +417,7 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	lseek(fd, WRITE_LBN * BYTES_PER_SECTOR, SEEK_SET);
 	n = write(fd, input_data_ptr, sizeof(Dtype) * input_data_.count());
 	fsync(fd);
-	printf("write size : %d\n", n);
-	
-	printf("input img sent  : ");
-	for(int i = 0; i < 10; i++) {
-		printf("%.0f ", input_data_ptr[i]);
-	}
-	cout << endl;
+	printf("write img done - size : %d\n", n);
 	
 	// trigger im2col
 	int tmp = 0;
@@ -431,37 +425,27 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	write(fd, &tmp, sizeof(tmp));
 	fsync(fd);
 
-	// wait for im2col
-	//printf("wait for im2col...\n");
-	//sleep(5);
-	//printf("resume...\n");
-	
-	/*
-	Dtype flag_wait = 0;
-	while(1) {
-		lseek(fd_read_im2col, 0, SEEK_SET);
-		read(fd_read_im2col, &flag_wait, sizeof(flag_wait));
-		if(flag_wait) {
-			printf("first im2col data out\n");
-			break;
-		}
-	}
-	*/
-
 	// read im2coled data
 	lseek(fd, READ_LBN * BYTES_PER_SECTOR, SEEK_SET);
-	read(fd, transformed_data_ptr, sizeof(Dtype) * offset_);
+	n = read(fd, transformed_data_ptr, sizeof(Dtype) * offset_);
 
-	// wait for read
-	//sleep(60);
-  //printf("read im2col done - size : %d\n", sizeof(Dtype) * offset_);
+  printf("read im2col done - size : %d\n", sizeof(Dtype) * offset_);
   
+	printf("input img sent  : ");
+	for(int i = 0; i < 10; i++) {
+		printf("%.0f ", input_data_ptr[i]);
+	}
+	cout << endl;
+
 	printf("ftl im2col rcvd : ");
 	for(int i = 0; i < 10; i++) {
 		printf("%.0f ", transformed_data_ptr[i]);
 	}
 	cout << endl;
   
+	trans_time += timer.MicroSeconds();
+	printf("total time - img write, im2col, read : %lf\n", trans_time);
+
 	// fd close
 	close(fd);
 	
