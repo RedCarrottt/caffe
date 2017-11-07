@@ -92,7 +92,6 @@ void ImageDataIm2ColLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bot
   const int batch_size = this->layer_param_.image_data_im2col_param().batch_size();
   CHECK_GT(batch_size, 0) << "Positive batch size required";
   // @halfways : N = batch_size (blob is based on batch)
-  // moved to the end of layer setup
   // check point!
   top_shape[0] = batch_size;
   for (int i = 0; i < this->prefetch_.size(); ++i) {
@@ -297,7 +296,6 @@ void ImageDataIm2ColLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bot
   //top_dim_ = top[0]->count(channel_axis_);
 
   // @halfways : N = batch_size (blob is based on batch)
-  // needs to move this part to the end of layer setup
   // check point!
   top_shape[0] = batch_size;
   for (int i = 0; i < this->prefetch_.size(); ++i) {
@@ -402,101 +400,66 @@ void ImageDataIm2ColLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 	// 1) Transform to get input of im2col in temp
 	// 2) put into im2col to get col
 	
-	int offset = offset_ * item_id;
-	this->transformed_data_.set_cpu_data(prefetch_data + offset);
-	this->data_transformer_->Transform(cv_img, &(this->input_data_));
-	const Dtype* input_data_ptr = this->input_data_.cpu_data();
-	Dtype* transformed_data_ptr = 
-		this->transformed_data_.mutable_cpu_data();
+		int offset = offset_ * item_id;
+		this->transformed_data_.set_cpu_data(prefetch_data + offset);
+		this->data_transformer_->Transform(cv_img, &(this->input_data_));
+		const Dtype* input_data_ptr = this->input_data_.cpu_data();
+		Dtype* transformed_data_ptr = 
+			this->transformed_data_.mutable_cpu_data();
+		
+		// fd open
+		int fd = open("/dev/sdb", O_RDWR);
+		ssize_t n;
 	
-	// fd open
-	int fd = open("/dev/sdb", O_RDWR);
-	ssize_t n;
-
-	// first write cv_img for test
-	lseek(fd, WRITE_LBN * BYTES_PER_SECTOR, SEEK_SET);
-	n = write(fd, input_data_ptr, sizeof(Dtype) * input_data_.count());
-	fsync(fd);
-	printf("write img done - size : %d\n", n);
+		// first write cv_img for test
+		lseek(fd, WRITE_LBN * BYTES_PER_SECTOR, SEEK_SET);
+		n = write(fd, input_data_ptr, sizeof(Dtype) * input_data_.count());
+		fsync(fd);
+		//printf("write img done - size : %d\n", n);
+		
+		// trigger im2col
+		int tmp = 0;
+		lseek(fd, TRIGGER_LBN * BYTES_PER_SECTOR, SEEK_SET);
+		write(fd, &tmp, sizeof(tmp));
+		fsync(fd);
 	
-	// trigger im2col
-	int tmp = 0;
-	lseek(fd, TRIGGER_LBN * BYTES_PER_SECTOR, SEEK_SET);
-	write(fd, &tmp, sizeof(tmp));
-	fsync(fd);
-
-	// read im2coled data
-	lseek(fd, READ_LBN * BYTES_PER_SECTOR, SEEK_SET);
-	n = read(fd, transformed_data_ptr, sizeof(Dtype) * offset_);
-
-  printf("read im2col done - size : %d\n", sizeof(Dtype) * offset_);
-  
-	printf("input img sent  : ");
-	for(int i = 0; i < 10; i++) {
-		printf("%.0f ", input_data_ptr[i]);
-	}
-	cout << endl;
-
-	printf("ftl im2col rcvd : ");
-	for(int i = 0; i < 10; i++) {
-		printf("%.0f ", transformed_data_ptr[i]);
-	}
-	cout << endl;
-  
-	trans_time += timer.MicroSeconds();
-	printf("total time - img write, im2col, read : %lf\n", trans_time);
-
-	// fd close
-	close(fd);
+		// read im2coled data
+		lseek(fd, READ_LBN * BYTES_PER_SECTOR, SEEK_SET);
+		n = read(fd, transformed_data_ptr, sizeof(Dtype) * offset_);
 	
-	exit(0);
-	
-	conv_im2col_cpu(input_data_ptr, transformed_data_ptr);
-
-	//printf("host im2col rcvd: ");
-	//for(int i = 0; i < 10; i++) {
-	//	printf("%.0f ", transformed_data_ptr[i]);
-	//}
-	//cout << endl;
-
-  //printf("--------host im2col------ \n");
-	//for(int i = 0; i < 5; i++) {
-		//cout << transformed_data_ptr[i] << " ";
-	//	printf("int : %d, float : %f, float(cast) : %f\n",
-	//		 	transformed_data_ptr[i], transformed_data_ptr[i],
-	//		 	(float)transformed_data_ptr[i]);
-	//}
-	//cout << endl;
-
-	// @halfways : test cout for image file
-	/*
-	int cnt = 0;
-	int top_index;
-
-	for(int h = 0; h < cv_img.rows; ++h) {
-		for(int w = 0; w < cv_img.cols; ++h) {
-			for(int c = 0; c < cv_img.channels(); ++c) {
-				top_index = (c * cv_img.rows + h) * cv_img.cols + w;
-				
-				if(input_data_ptr[top_index] != 0 &&
-					 input_data_ptr[top_index] == transformed_data_ptr[top_index]) {
-					cout << input_data_ptr[top_index] << " : ";
-				  cout << transformed_data_ptr[top_index] << endl;
-				}
-				else {
-					cnt++;
-					if(cnt % 0 == 0) {
-						printf("not yet matched... %d\n", cnt);
-					}
-				}
-			}
-			break;
+	  //printf("read im2col done - size : %d\n", sizeof(Dtype) * offset_);
+	  
+		/*
+		printf("input img sent  : ");
+		for(int i = 0; i < 10; i++) {
+			printf("%.0f ", input_data_ptr[i]);
 		}
-	}
-	*/
-
-	trans_time += timer.MicroSeconds();
-
+		cout << endl;
+	
+		printf("ftl im2col rcvd : ");
+		for(int i = 0; i < 10; i++) {
+			printf("%.0f ", transformed_data_ptr[i]);
+		}
+		cout << endl;
+	  */
+	
+		// fd close
+		close(fd);
+		
+		//exit(0);
+		
+		//conv_im2col_cpu(input_data_ptr, transformed_data_ptr);
+	
+		//printf("host im2col rcvd: ");
+		//for(int i = 0; i < 10; i++) {
+		//	printf("%.0f ", transformed_data_ptr[i]);
+		//}
+		//cout << endl;
+	
+		trans_time += timer.MicroSeconds();
+		//printf("one img loading & im2col : %lf\n", trans_time);
+	
+		// fd close
     prefetch_label[item_id] = lines_[lines_id_].second;
     // go to the next iter
     lines_id_++;

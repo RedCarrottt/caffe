@@ -267,12 +267,12 @@ void BaseFirstConvolutionLayer<Dtype>::forward_cpu_gemm(const Dtype* input,
   // @halfways : skip im2col here
   const Dtype* col_buff = input;
   if (!idl_im2col) {
-	if (!is_1x1_) {
+		if (!is_1x1_) {
       if (!skip_im2col) {
         conv_im2col_cpu(input, col_buffer_.mutable_cpu_data());
       }
       col_buff = col_buffer_.cpu_data();
-	}
+		}
   }
   // should memcpy called for blas input?
   // in the case of is_1x1 called, it doesn't call so not needed

@@ -45,19 +45,11 @@ void FirstConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& botto
 		// @halfways : num_ = N (batch_size), bottom_dim_ = C * H * W
 		// bottom_dim_ must be modified => FN * OH * OW
 		// need to cut? or just send?
-  		this->forward_cpu_gemm(bottom_data + n * this->bottom_dim_, weight,
-          top_data + n * this->top_dim_, false, true);
-/*
-      if(!is_1x1_ && !skip_im2col) {
-        col_buff = bottom_data + n * this->bottom_dim_;
-        conv_im2col_cpu(col_buff, col_buffer_.mutable_cpu_data());
-        col_buff = col_buffer_.cpu_data();
-      }
-*/
+  		this->forward_cpu_gemm(bottom_data + n * this->bottom_dim_im2col_,
+				 	weight, top_data + n * this->top_dim_, false, true);
       if (this->bias_term_) {
         const Dtype* bias = this->blobs_[1]->cpu_data();
         this->forward_cpu_bias(top_data + n * this->top_dim_, bias);
-	//printf("test - i : %d, n : %d\n", temp, n);
       }
     }
   }

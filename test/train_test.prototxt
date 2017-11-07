@@ -12,7 +12,7 @@ layer {
   }
   image_data_im2col_param {
     source: "test/train.txt"
-    batch_size: 15
+    batch_size: 1
 		new_height: 256
 		new_width: 256
 		kernel_size: 5
@@ -32,7 +32,7 @@ layer {
   }
   image_data_im2col_param {
     source: "test/test.txt"
-    batch_size: 15
+    batch_size: 1
 		new_height: 256
 		new_width: 256
 		kernel_size: 5
